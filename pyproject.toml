@@ -13,6 +13,7 @@ dependencies = [
 [project.scripts]
 guarita = "guarita.cli:main"
 guarita-lab-agent = "guarita.lab.agent:main"
+guarita-lab-measure = "guarita.lab.measure:main"
 guarita-lab-server = "guarita.lab.server:main"
 
 [build-system]
