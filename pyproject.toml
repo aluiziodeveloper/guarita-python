@@ -6,11 +6,13 @@ readme = "README.md"
 license = "MIT"
 requires-python = ">=3.14"
 dependencies = [
+    "httpx>=0.28.1",
     "mcp>=2.3.0",
 ]
 
 [project.scripts]
 guarita = "guarita.cli:main"
+guarita-lab-agent = "guarita.lab.agent:main"
 guarita-lab-server = "guarita.lab.server:main"
 
 [build-system]
