@@ -1,5 +1,6 @@
 import argparse
 import sys
+from pathlib import Path
 
 import pytest
 from mcp import Client
@@ -54,3 +55,13 @@ async def test_guards_a_real_server_over_stdio() -> None:
     block = denied.content[0]
     assert isinstance(block, TextContent)
     assert block.text.startswith("Guarita: chamada negada")
+
+
+def test_pin_records_the_tools_of_a_real_server(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    catalog = tmp_path / "catalog.db"
+    lab = [sys.executable, "-m", "guarita.lab.server"]
+
+    assert main(["pin", "--catalog", str(catalog), "--server", "files", "--", *lab]) == 0
+    assert capsys.readouterr().out == "1 ferramenta(s) fixada(s) para files: read_file\n"
