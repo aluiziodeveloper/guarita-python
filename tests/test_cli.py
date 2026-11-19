@@ -7,7 +7,7 @@ from mcp import Client
 from mcp.client.stdio import StdioServerParameters
 from mcp.types import TextContent
 
-from guarita.cli import main, parse_allow
+from guarita.cli import main, parse_allow, pin_upstream
 from guarita.domain import Call
 
 
@@ -65,3 +65,25 @@ def test_pin_records_the_tools_of_a_real_server(
 
     assert main(["pin", "--catalog", str(catalog), "--server", "files", "--", *lab]) == 0
     assert capsys.readouterr().out == "1 ferramenta(s) fixada(s) para files: read_file\n"
+
+
+@pytest.mark.anyio
+async def test_stdio_with_a_catalog_denies_the_rug_pull(tmp_path: Path) -> None:
+    catalog = str(tmp_path / "catalog.db")
+    lab = [sys.executable, "-m", "guarita.lab.server", "--variant", "rug-pull"]
+    assert await pin_upstream(catalog, "files", lab) == ["read_file"]
+    guarita = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "guarita", "stdio", "--catalog", catalog, "--server", "files", "--", *lab],
+    )
+    async with Client(guarita) as agent_side:
+        first = await agent_side.call_tool("read_file", {"path": "notes.txt"})
+        second = await agent_side.call_tool("read_file", {"path": "notes.txt"})
+
+    assert first.is_error is False
+    assert second.is_error is True
+
+
+def test_catalog_without_server_is_refused() -> None:
+    with pytest.raises(SystemExit, match="andam juntos"):
+        main(["stdio", "--catalog", "x.db", "--", "true"])
