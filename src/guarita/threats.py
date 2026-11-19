@@ -1,0 +1,92 @@
+"""Modelo de ameaças como dados: a fonte de docs/threats.md, conferida por teste."""
+
+from dataclasses import dataclass
+from enum import StrEnum
+
+
+class Status(StrEnum):
+    OPEN = "aberta"
+    PARTIAL = "parcialmente mitigada"
+
+
+@dataclass(frozen=True)
+class Threat:
+    id: str
+    title: str
+    owasp: tuple[str, ...]
+    module: str
+    status: Status = Status.OPEN
+    defense: str = ""
+
+
+THREATS: tuple[Threat, ...] = (
+    Threat(
+        "tool-poisoning",
+        "Ordem escondida na descrição de uma ferramenta",
+        ("MCP03", "LLM01:2026", "ASI01"),
+        "03",
+        Status.PARTIAL,
+        "portão com lista de argumentos (aula 02-03)",
+    ),
+    Threat("rug-pull", "Troca silenciosa da definição aprovada", ("MCP04", "ASI04"), "03"),
+    Threat("tool-shadowing", "Ferramenta que imita o nome de outra", ("MCP03", "ASI02"), "03"),
+    Threat(
+        "excessive-agency",
+        "Agente com mais permissão do que a tarefa pede",
+        ("LLM03:2026", "ASI02", "MCP02"),
+        "04",
+    ),
+    Threat("approval-fatigue", "Aprovação humana obtida por cansaço", ("ASI09",), "04"),
+    Threat(
+        "data-exfiltration",
+        "Segredo ou dado pessoal saindo nos argumentos",
+        ("LLM02:2026", "MCP01", "MCP10"),
+        "05",
+    ),
+    Threat(
+        "indirect-prompt-injection",
+        "Instrução escondida no resultado de uma ferramenta",
+        ("LLM01:2026", "MCP06", "ASI01", "ASI06"),
+        "06",
+    ),
+    Threat(
+        "resource-abuse",
+        "Laço de chamadas que esgota cota ou custo",
+        ("LLM06:2026", "ASI08"),
+        "07",
+    ),
+    Threat(
+        "unexpected-execution",
+        "Servidor de ferramentas executando no host",
+        ("ASI05", "MCP05"),
+        "07",
+    ),
+    Threat(
+        "credential-misuse",
+        "Token do usuário repassado ao servidor (confused deputy)",
+        ("MCP07", "ASI03", "MCP01"),
+        "08",
+    ),
+    Threat("audit-tampering", "Registro apagado, editado ou ausente", ("MCP08",), "08"),
+)
+
+
+def render_markdown(threats: tuple[Threat, ...] = THREATS) -> str:
+    lines = [
+        "# Modelo de ameaças",
+        "",
+        "Gerado por `uv run python -m guarita.threats > docs/threats.md`.",
+        "",
+        "| Ameaça | Descrição | OWASP | Módulo | Estado | Defesa |",
+        "|---|---|---|---|---|---|",
+    ]
+    for t in threats:
+        refs = ", ".join(t.owasp)
+        lines.append(
+            f"| `{t.id}` | {t.title} | {refs} | {t.module} | {t.status} | {t.defense or '-'} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+if __name__ == "__main__":
+    print(render_markdown(), end="")
