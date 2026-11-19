@@ -12,6 +12,15 @@ uv sync
 uv run guarita --version
 ```
 
+## A Guarita na frente de um servidor
+
+```bash
+uv run guarita stdio --allow read_file:path=notes.txt -- guarita-lab-server --variant poisoned
+```
+
+O agente fala com a Guarita por stdio. Ela inicia o servidor depois do `--` e só repassa as
+chamadas que o portão deixa passar.
+
 ## Verificações
 
 ```bash

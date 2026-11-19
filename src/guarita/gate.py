@@ -32,3 +32,17 @@ class ArgumentAllowlist:
         if value in self._allowed:
             return Decision.allow()
         return Decision.deny(f"{self._argument}={value!r} fora da lista de {self._tool}")
+
+
+class AllOf:
+    """Junta portões: a chamada só passa se todos deixarem; o primeiro "não" vence."""
+
+    def __init__(self, gates: Iterable[Gate]) -> None:
+        self._gates = tuple(gates)
+
+    async def decide(self, call: Call) -> Decision:
+        for gate in self._gates:
+            decision = await gate.decide(call)
+            if not decision.allowed:
+                return decision
+        return Decision.allow()

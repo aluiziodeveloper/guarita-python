@@ -1,6 +1,13 @@
-import pytest
+import argparse
+import sys
 
-from guarita.cli import main
+import pytest
+from mcp import Client
+from mcp.client.stdio import StdioServerParameters
+from mcp.types import TextContent
+
+from guarita.cli import main, parse_allow
+from guarita.domain import Call
 
 
 def test_version_prints_the_package_version(capsys: pytest.CaptureFixture[str]) -> None:
@@ -13,3 +20,37 @@ def test_version_prints_the_package_version(capsys: pytest.CaptureFixture[str]) 
 
 def test_without_arguments_exits_with_zero() -> None:
     assert main([]) == 0
+
+
+@pytest.mark.anyio
+async def test_parse_allow_builds_an_allowlist() -> None:
+    gate = parse_allow("read_file:path=notes.txt,todo.txt")
+
+    assert (await gate.decide(Call("read_file", {"path": "todo.txt"}))).allowed
+    assert not (await gate.decide(Call("read_file", {"path": "~/.ssh/id_rsa"}))).allowed
+
+
+@pytest.mark.parametrize("spec", ["read_file", "read_file:path", "read_file:=x", ":path=x"])
+def test_parse_allow_refuses_incomplete_specs(spec: str) -> None:
+    with pytest.raises(argparse.ArgumentTypeError):
+        parse_allow(spec)
+
+
+@pytest.mark.anyio
+async def test_guards_a_real_server_over_stdio() -> None:
+    guarita = StdioServerParameters(
+        command=sys.executable,
+        args=[
+            *["-m", "guarita", "stdio", "--allow", "read_file:path=notes.txt", "--"],
+            *[sys.executable, "-m", "guarita.lab.server", "--variant", "poisoned"],
+        ],
+    )
+    async with Client(guarita) as agent_side:
+        allowed = await agent_side.call_tool("read_file", {"path": "notes.txt"})
+        denied = await agent_side.call_tool("read_file", {"path": "~/.ssh/id_rsa"})
+
+    assert allowed.is_error is False
+    assert denied.is_error is True
+    block = denied.content[0]
+    assert isinstance(block, TextContent)
+    assert block.text.startswith("Guarita: chamada negada")
