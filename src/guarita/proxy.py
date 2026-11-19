@@ -3,7 +3,16 @@
 from typing import Any, Protocol
 
 from mcp.server import Server, ServerRequestContext
-from mcp.types import CallToolRequestParams, CallToolResult, ListToolsResult, PaginatedRequestParams
+from mcp.types import (
+    CallToolRequestParams,
+    CallToolResult,
+    ListToolsResult,
+    PaginatedRequestParams,
+    TextContent,
+)
+
+from guarita.domain import Call, InvalidCallError
+from guarita.gate import AllowAll, Gate
 
 
 class Upstream(Protocol):
@@ -14,7 +23,16 @@ class Upstream(Protocol):
     async def call_tool(self, name: str, arguments: dict[str, Any] | None) -> CallToolResult: ...
 
 
-def build_proxy(upstream: Upstream) -> Server[Any]:
+def refusal(reason: str) -> CallToolResult:
+    return CallToolResult(
+        content=[TextContent(type="text", text=f"Guarita: chamada negada ({reason})")],
+        is_error=True,
+    )
+
+
+def build_proxy(upstream: Upstream, gate: Gate | None = None) -> Server[Any]:
+    gate = gate or AllowAll()
+
     async def list_tools(
         ctx: ServerRequestContext[Any], params: PaginatedRequestParams | None
     ) -> ListToolsResult:
@@ -23,6 +41,13 @@ def build_proxy(upstream: Upstream) -> Server[Any]:
     async def call_tool(
         ctx: ServerRequestContext[Any], params: CallToolRequestParams
     ) -> CallToolResult:
-        return await upstream.call_tool(params.name, params.arguments)
+        try:
+            call = Call(params.name, params.arguments or {})
+        except InvalidCallError as error:
+            return refusal(str(error))
+        decision = await gate.decide(call)
+        if not decision.allowed:
+            return refusal(decision.reason)
+        return await upstream.call_tool(call.tool, dict(call.arguments))
 
     return Server("guarita", on_list_tools=list_tools, on_call_tool=call_tool)

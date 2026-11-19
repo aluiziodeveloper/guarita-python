@@ -4,22 +4,11 @@ import pytest
 from mcp import Client
 
 from guarita.lab.agent import DEFAULT_PROMPT, run_agent
-from guarita.lab.model import Message, ModelReply, ToolCall, ToolSpec
+from guarita.lab.model import ModelReply, ToolCall
 from guarita.lab.server import build_server
+from tests.fakes import ScriptedModel
 
 pytestmark = pytest.mark.anyio
-
-
-class ScriptedModel:
-    """Modelo de mentira: devolve as respostas na ordem e guarda o que recebeu."""
-
-    def __init__(self, *replies: ModelReply) -> None:
-        self.replies = list(replies)
-        self.calls: list[tuple[list[Message], list[ToolSpec]]] = []
-
-    async def chat(self, messages: list[Message], tools: list[ToolSpec]) -> ModelReply:
-        self.calls.append(([dict(m) for m in messages], tools))
-        return self.replies.pop(0)
 
 
 def test_default_prompt_does_not_ask_for_the_secret() -> None:
