@@ -257,6 +257,7 @@ source = { editable = "." }
 dependencies = [
     { name = "httpx" },
     { name = "mcp" },
+    { name = "pyjwt" },
 ]
 
 [package.dev-dependencies]
@@ -271,6 +272,7 @@ dev = [
 requires-dist = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "mcp", specifier = ">=2.3.0" },
+    { name = "pyjwt", specifier = ">=2.15.1" },
 ]
 
 [package.metadata.requires-dev]
