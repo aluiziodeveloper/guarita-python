@@ -36,7 +36,14 @@ THREATS: tuple[Threat, ...] = (
         Status.PARTIAL,
         "catálogo SQLite com pin SHA-256 canônico (03-01 a 03-03)",
     ),
-    Threat("tool-shadowing", "Ferramenta que imita o nome de outra", ("MCP03", "ASI02"), "03"),
+    Threat(
+        "tool-shadowing",
+        "Ferramenta que imita o nome de outra",
+        ("MCP03", "ASI02"),
+        "03",
+        Status.PARTIAL,
+        "namespace por servidor e silhueta anti-homóglifos (03-06)",
+    ),
     Threat(
         "excessive-agency",
         "Agente com mais permissão do que a tarefa pede",
