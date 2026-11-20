@@ -9,11 +9,13 @@ from mcp.types import (
     ListToolsResult,
     PaginatedRequestParams,
     TextContent,
+    Tool,
 )
 
-from guarita.domain import Call, InvalidCallError
+from guarita.domain import Call, Decision, InvalidCallError
 from guarita.gate import AllowAll, Gate
 from guarita.integrity import PinnedTools
+from guarita.scanner import DescriptionScanner
 
 
 class Upstream(Protocol):
@@ -32,18 +34,32 @@ def refusal(reason: str) -> CallToolResult:
 
 
 def build_proxy(
-    upstream: Upstream, gate: Gate | None = None, integrity: PinnedTools | None = None
+    upstream: Upstream,
+    gate: Gate | None = None,
+    integrity: PinnedTools | None = None,
+    scanner: DescriptionScanner | None = None,
 ) -> Server[Any]:
     gate = gate or AllowAll()
+
+    def check_tool(tool: Tool) -> Decision:
+        if integrity is not None:
+            checked = integrity.check(tool)
+            if not checked.allowed:
+                return checked
+        if scanner is not None:
+            scanned = scanner.check(tool)
+            if not scanned.allowed:
+                return scanned
+        return Decision.allow()
 
     async def list_tools(
         ctx: ServerRequestContext[Any], params: PaginatedRequestParams | None
     ) -> ListToolsResult:
         listing = await upstream.list_tools()
-        if integrity is None:
+        if integrity is None and scanner is None:
             return listing
-        # O agente nem chega a ler uma definição que não foi aprovada.
-        kept = [tool for tool in listing.tools if integrity.check(tool).allowed]
+        # O agente nem chega a ler uma definição que não passou na integridade ou no varredor.
+        kept = [tool for tool in listing.tools if check_tool(tool).allowed]
         return ListToolsResult(tools=kept)
 
     async def call_tool(
@@ -53,12 +69,12 @@ def build_proxy(
             call = Call(params.name, params.arguments or {})
         except InvalidCallError as error:
             return refusal(str(error))
-        if integrity is not None:
+        if integrity is not None or scanner is not None:
             listing = await upstream.list_tools()
             current = next((t for t in listing.tools if t.name == call.tool), None)
             if current is None:
                 return refusal(f"{call.tool} não existe no servidor")
-            checked = integrity.check(current)
+            checked = check_tool(current)
             if not checked.allowed:
                 return refusal(checked.reason)
         decision = await gate.decide(call)

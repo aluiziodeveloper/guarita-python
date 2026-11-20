@@ -26,9 +26,16 @@ THREATS: tuple[Threat, ...] = (
         ("MCP03", "LLM01:2026", "ASI01"),
         "03",
         Status.PARTIAL,
-        "portão com lista de argumentos (aula 02-03)",
+        "portão (02-03) + varredor NFKC e Unicode invisível (03-05)",
     ),
-    Threat("rug-pull", "Troca silenciosa da definição aprovada", ("MCP04", "ASI04"), "03"),
+    Threat(
+        "rug-pull",
+        "Troca silenciosa da definição aprovada",
+        ("MCP04", "ASI04"),
+        "03",
+        Status.PARTIAL,
+        "catálogo SQLite com pin SHA-256 canônico (03-01 a 03-03)",
+    ),
     Threat("tool-shadowing", "Ferramenta que imita o nome de outra", ("MCP03", "ASI02"), "03"),
     Threat(
         "excessive-agency",
