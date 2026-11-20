@@ -97,6 +97,8 @@ THREATS: tuple[Threat, ...] = (
         "Token do usuário repassado ao servidor (confused deputy)",
         ("MCP07", "ASI03", "MCP01"),
         "08",
+        Status.PARTIAL,
+        "identidade por JWT, Origin guard e credencial dedicada por servidor (08-03 e 08-04)",
     ),
     Threat(
         "audit-tampering",
