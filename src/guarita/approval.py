@@ -1,9 +1,11 @@
-"""Aprovação humana com prazo: pausa chamadas sensíveis até o operador decidir."""
+"""Aprovação humana com prazo, limite de fila e resfriamento contra fadiga."""
 
 import asyncio
 import html
 import json
 import secrets
+import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -29,11 +31,21 @@ class ApprovalRequest:
 
 
 class ApprovalBroker:
-    """Gerencia a fila de aprovações pendentes com falha fechada no estouro do prazo."""
+    """Gerencia aprovações pendentes com falha fechada, limite por agente e resfriamento."""
 
-    def __init__(self, timeout_seconds: float = 30.0) -> None:
+    def __init__(
+        self,
+        timeout_seconds: float = 30.0,
+        max_pending_per_agent: int = 3,
+        cooldown_seconds: float = 60.0,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
         self._timeout = timeout_seconds
+        self._max_pending = max_pending_per_agent
+        self._cooldown = cooldown_seconds
+        self._clock = clock
         self._requests: dict[str, ApprovalRequest] = {}
+        self._cooldown_until: dict[tuple[str, str], float] = {}
 
     def create_pending(self, call: Call, reason: str) -> ApprovalRequest:
         req = ApprovalRequest(id=secrets.token_hex(6), call=call, reason=reason)
@@ -57,9 +69,17 @@ class ApprovalBroker:
         if req.status is ApprovalStatus.PENDING:
             req.status = ApprovalStatus.DENIED
             req.note = note
+            key = (req.call.agent, req.call.tool)
+            self._cooldown_until[key] = self._clock() + self._cooldown
             req._done.set()
 
     async def wait_for_decision(self, call: Call, reason: str) -> Decision:
+        key = (call.agent, call.tool)
+        if self._clock() < self._cooldown_until.get(key, 0.0):
+            return Decision.deny(f"em resfriamento após recusa anterior para {call.tool}")
+        agent_pending = sum(1 for r in self.pending() if r.call.agent == call.agent)
+        if agent_pending >= self._max_pending:
+            return Decision.deny(f"limite de pendências atingido para {call.agent}")
         req = self.create_pending(call, reason)
         try:
             await asyncio.wait_for(req._done.wait(), timeout=self._timeout)

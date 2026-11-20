@@ -8,7 +8,7 @@ Gerado por `uv run python -m guarita.threats > docs/threats.md`.
 | `rug-pull` | Troca silenciosa da definição aprovada | MCP04, ASI04 | 03 | parcialmente mitigada | catálogo SQLite com pin SHA-256 canônico (03-01 a 03-03) |
 | `tool-shadowing` | Ferramenta que imita o nome de outra | MCP03, ASI02 | 03 | parcialmente mitigada | namespace por servidor e silhueta anti-homóglifos (03-06) |
 | `excessive-agency` | Agente com mais permissão do que a tarefa pede | LLM03:2026, ASI02, MCP02 | 04 | parcialmente mitigada | política TOML default-deny por agente e argumento (04-01 e 04-02) |
-| `approval-fatigue` | Aprovação humana obtida por cansaço | ASI09 | 04 | aberta | - |
+| `approval-fatigue` | Aprovação humana obtida por cansaço | ASI09 | 04 | parcialmente mitigada | aprovação com prazo, limite de fila e resfriamento (04-03 e 04-04) |
 | `data-exfiltration` | Segredo ou dado pessoal saindo nos argumentos | LLM02:2026, MCP01, MCP10 | 05 | aberta | - |
 | `indirect-prompt-injection` | Instrução escondida no resultado de uma ferramenta | LLM01:2026, MCP06, ASI01, ASI06 | 06 | aberta | - |
 | `resource-abuse` | Laço de chamadas que esgota cota ou custo | LLM06:2026, ASI08 | 07 | aberta | - |

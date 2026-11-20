@@ -52,7 +52,14 @@ THREATS: tuple[Threat, ...] = (
         Status.PARTIAL,
         "política TOML default-deny por agente e argumento (04-01 e 04-02)",
     ),
-    Threat("approval-fatigue", "Aprovação humana obtida por cansaço", ("ASI09",), "04"),
+    Threat(
+        "approval-fatigue",
+        "Aprovação humana obtida por cansaço",
+        ("ASI09",),
+        "04",
+        Status.PARTIAL,
+        "aprovação com prazo, limite de fila e resfriamento (04-03 e 04-04)",
+    ),
     Threat(
         "data-exfiltration",
         "Segredo ou dado pessoal saindo nos argumentos",
