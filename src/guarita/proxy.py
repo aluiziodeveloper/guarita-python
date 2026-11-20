@@ -15,6 +15,7 @@ from mcp.types import (
 from guarita.domain import Call, Decision, InvalidCallError
 from guarita.gate import AllowAll, Gate
 from guarita.integrity import PinnedTools
+from guarita.response import ResultReviewer
 from guarita.scanner import DescriptionScanner
 
 
@@ -38,6 +39,7 @@ def build_proxy(
     gate: Gate | None = None,
     integrity: PinnedTools | None = None,
     scanner: DescriptionScanner | None = None,
+    reviewer: ResultReviewer | None = None,
 ) -> Server[Any]:
     gate = gate or AllowAll()
 
@@ -80,6 +82,9 @@ def build_proxy(
         decision = await gate.decide(call)
         if not decision.allowed:
             return refusal(decision.reason)
-        return await upstream.call_tool(call.tool, dict(call.arguments))
+        result = await upstream.call_tool(call.tool, dict(call.arguments))
+        if reviewer is not None:
+            return await reviewer.review(call, result)
+        return result
 
     return Server("guarita", on_list_tools=list_tools, on_call_tool=call_tool)
