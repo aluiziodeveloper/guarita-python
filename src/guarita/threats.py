@@ -65,6 +65,8 @@ THREATS: tuple[Threat, ...] = (
         "Segredo ou dado pessoal saindo nos argumentos",
         ("LLM02:2026", "MCP01", "MCP10"),
         "05",
+        Status.PARTIAL,
+        "schema fixado, DLP (CPF, segredos, Base64, entropia) e egress allowlist (05-01 a 05-04)",
     ),
     Threat(
         "indirect-prompt-injection",
