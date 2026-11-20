@@ -12,6 +12,6 @@ Gerado por `uv run python -m guarita.threats > docs/threats.md`.
 | `data-exfiltration` | Segredo ou dado pessoal saindo nos argumentos | LLM02:2026, MCP01, MCP10 | 05 | parcialmente mitigada | schema fixado, DLP (CPF, segredos, Base64, entropia) e egress allowlist (05-01 a 05-04) |
 | `indirect-prompt-injection` | Instrução escondida no resultado de uma ferramenta | LLM01:2026, MCP06, ASI01, ASI06 | 06 | parcialmente mitigada | revisão de resposta, detector, delimitador aleatório e classificador (06-01 a 06-04) |
 | `resource-abuse` | Laço de chamadas que esgota cota ou custo | LLM06:2026, ASI08 | 07 | parcialmente mitigada | token bucket, orçamento de custo e disjuntor (07-02 e 07-03) |
-| `unexpected-execution` | Servidor de ferramentas executando no host | ASI05, MCP05 | 07 | aberta | - |
+| `unexpected-execution` | Servidor de ferramentas executando no host | ASI05, MCP05 | 07 | parcialmente mitigada | contêiner sem rede, somente leitura e sem capabilities para stdio (07-04) |
 | `credential-misuse` | Token do usuário repassado ao servidor (confused deputy) | MCP07, ASI03, MCP01 | 08 | aberta | - |
 | `audit-tampering` | Registro apagado, editado ou ausente | MCP08 | 08 | aberta | - |

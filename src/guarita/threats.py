@@ -89,6 +89,8 @@ THREATS: tuple[Threat, ...] = (
         "Servidor de ferramentas executando no host",
         ("ASI05", "MCP05"),
         "07",
+        Status.PARTIAL,
+        "contêiner sem rede, somente leitura e sem capabilities para stdio (07-04)",
     ),
     Threat(
         "credential-misuse",
