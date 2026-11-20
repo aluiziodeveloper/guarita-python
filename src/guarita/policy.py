@@ -8,6 +8,7 @@ from enum import StrEnum
 from pathlib import Path, PurePosixPath
 from types import MappingProxyType
 from typing import Any
+from urllib.parse import unquote
 
 from guarita.domain import Call, Decision
 
@@ -23,7 +24,10 @@ class Effect(StrEnum):
 
 
 def _has_traversal(value: str) -> bool:
-    return ".." in PurePosixPath(value.replace("\\", "/")).parts
+    decoded = value
+    for _ in range(2):
+        decoded = unquote(decoded)
+    return ".." in PurePosixPath(decoded.replace("\\", "/")).parts
 
 
 def _argument_matches(value: Any, patterns: tuple[str, ...]) -> bool:

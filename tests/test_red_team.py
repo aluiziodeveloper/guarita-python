@@ -47,7 +47,7 @@ async def test_combined_guarita_blocks_poisoning_rug_pull_injection_and_exfil(
                 EgressGate({"api.corp.test"}),
                 TokenBucketGate(capacity=10, refill_per_second=1.0, clock=lambda: 0.0),
             ),
-            outbound=(InjectionReviewer(),),
+            outbound=(InjectionReviewer(), UntrustedWrapper()),
         )
     )
 
@@ -87,7 +87,6 @@ async def test_combined_guarita_blocks_poisoning_rug_pull_injection_and_exfil(
     assert verify_trail(tmp_path / "audit.jsonl").ok is True
 
 
-@pytest.mark.xfail(strict=True, reason="costura 1: DLP ainda não normaliza Unicode NFKC/Cf")
 async def test_seam_fullwidth_cpf_bypasses_dlp() -> None:
     smuggled_cpf = to_fullwidth("529.982.247-25")
     decision = await DlpGate().decide(Call("send_message", {"body": f"CPF {smuggled_cpf}"}))
@@ -95,7 +94,6 @@ async def test_seam_fullwidth_cpf_bypasses_dlp() -> None:
     assert decision.allowed is False
 
 
-@pytest.mark.xfail(strict=True, reason="costura 2: política ainda não decodifica %2e%2e")
 async def test_seam_percent_encoded_traversal_bypasses_policy() -> None:
     policy = PolicyGate.from_toml(
         """
@@ -111,9 +109,6 @@ async def test_seam_percent_encoded_traversal_bypasses_policy() -> None:
     assert decision.allowed is False
 
 
-@pytest.mark.xfail(
-    strict=True, reason="costura 3: replace_text descarta structured_content exigido pelo SDK 2.x"
-)
 async def test_seam_untrusted_wrapper_with_mcpserver_output_schema() -> None:
     async with (
         Client(build_server("honest")) as upstream,

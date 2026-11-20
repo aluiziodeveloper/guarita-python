@@ -18,7 +18,11 @@ def extract_text(result: CallToolResult) -> str:
 
 
 def replace_text(result: CallToolResult, new_text: str) -> CallToolResult:
+    structured = result.structured_content
+    if isinstance(structured, dict) and "result" in structured:
+        structured = {**structured, "result": new_text}
     return CallToolResult(
         content=[TextContent(type="text", text=new_text)],
+        structured_content=structured,
         is_error=result.is_error,
     )

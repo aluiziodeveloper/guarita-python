@@ -4,6 +4,7 @@ import base64
 import binascii
 import math
 import re
+import unicodedata
 from collections import Counter
 from collections.abc import Iterator, Mapping
 from typing import Any
@@ -75,8 +76,14 @@ def _has_mixed_classes(token: str) -> bool:
     return has_upper and has_lower and has_digit
 
 
+def _normalize_for_dlp(text: str) -> str:
+    visible = "".join(ch for ch in text if unicodedata.category(ch) != "Cf")
+    return unicodedata.normalize("NFKC", visible)
+
+
 def scan_text(text: str, depth: int = 2, entropy_threshold: float = 4.3) -> list[str]:
     """Devolve apenas os tipos encontrados — nunca o segredo ou o CPF em claro."""
+    text = _normalize_for_dlp(text)
     kinds: list[str] = []
     for match in CPF_PATTERN.finditer(text):
         if is_valid_cpf(match.group(1)):
