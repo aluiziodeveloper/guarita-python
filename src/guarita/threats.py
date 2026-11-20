@@ -73,6 +73,8 @@ THREATS: tuple[Threat, ...] = (
         "Instrução escondida no resultado de uma ferramenta",
         ("LLM01:2026", "MCP06", "ASI01", "ASI06"),
         "06",
+        Status.PARTIAL,
+        "revisão de resposta, detector, delimitador aleatório e classificador (06-01 a 06-04)",
     ),
     Threat(
         "resource-abuse",

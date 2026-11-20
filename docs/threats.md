@@ -10,7 +10,7 @@ Gerado por `uv run python -m guarita.threats > docs/threats.md`.
 | `excessive-agency` | Agente com mais permissão do que a tarefa pede | LLM03:2026, ASI02, MCP02 | 04 | parcialmente mitigada | política TOML default-deny por agente e argumento (04-01 e 04-02) |
 | `approval-fatigue` | Aprovação humana obtida por cansaço | ASI09 | 04 | parcialmente mitigada | aprovação com prazo, limite de fila e resfriamento (04-03 e 04-04) |
 | `data-exfiltration` | Segredo ou dado pessoal saindo nos argumentos | LLM02:2026, MCP01, MCP10 | 05 | parcialmente mitigada | schema fixado, DLP (CPF, segredos, Base64, entropia) e egress allowlist (05-01 a 05-04) |
-| `indirect-prompt-injection` | Instrução escondida no resultado de uma ferramenta | LLM01:2026, MCP06, ASI01, ASI06 | 06 | aberta | - |
+| `indirect-prompt-injection` | Instrução escondida no resultado de uma ferramenta | LLM01:2026, MCP06, ASI01, ASI06 | 06 | parcialmente mitigada | revisão de resposta, detector, delimitador aleatório e classificador (06-01 a 06-04) |
 | `resource-abuse` | Laço de chamadas que esgota cota ou custo | LLM06:2026, ASI08 | 07 | aberta | - |
 | `unexpected-execution` | Servidor de ferramentas executando no host | ASI05, MCP05 | 07 | aberta | - |
 | `credential-misuse` | Token do usuário repassado ao servidor (confused deputy) | MCP07, ASI03, MCP01 | 08 | aberta | - |
