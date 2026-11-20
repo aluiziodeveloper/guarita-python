@@ -1,11 +1,12 @@
 """Catálogo de ferramentas aprovadas, com o pin da impressão digital de cada definição."""
 
+import json
 import sqlite3
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import Self
+from typing import Any, Self
 
 from mcp.types import Tool
 
@@ -59,6 +60,16 @@ class PinCatalog:
             (server, tool),
         ).fetchone()
         return None if row is None else str(row[0])
+
+    def definition(self, server: str, tool: str) -> dict[str, Any] | None:
+        row = self._db.execute(
+            "SELECT definition FROM pins WHERE server = ? AND tool = ?",
+            (server, tool),
+        ).fetchone()
+        if row is None:
+            return None
+        loaded: dict[str, Any] = json.loads(str(row[0]))
+        return loaded
 
     def close(self) -> None:
         self._db.close()
