@@ -98,7 +98,14 @@ THREATS: tuple[Threat, ...] = (
         ("MCP07", "ASI03", "MCP01"),
         "08",
     ),
-    Threat("audit-tampering", "Registro apagado, editado ou ausente", ("MCP08",), "08"),
+    Threat(
+        "audit-tampering",
+        "Registro apagado, editado ou ausente",
+        ("MCP08",),
+        "08",
+        Status.PARTIAL,
+        "trilha JSONL encadeada por SHA-256 e verificador audit-verify (08-01 e 08-02)",
+    ),
 )
 
 

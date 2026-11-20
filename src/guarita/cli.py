@@ -9,6 +9,7 @@ from mcp.client.stdio import StdioServerParameters
 from mcp.server.stdio import stdio_server
 
 from guarita import __version__
+from guarita.audit import verify_trail
 from guarita.catalog import PinCatalog
 from guarita.gate import AllOf, ArgumentAllowlist, Gate
 from guarita.integrity import PinnedTools
@@ -42,6 +43,8 @@ def build_parser() -> argparse.ArgumentParser:
     pin.add_argument("--catalog", required=True, help="arquivo SQLite do catálogo")
     pin.add_argument("--server", required=True, help="nome do servidor no catálogo")
     pin.add_argument("upstream", nargs="+", help="comando do servidor MCP, depois de --")
+    audit = commands.add_parser("audit-verify", help="confere a integridade da trilha de auditoria")
+    audit.add_argument("path", help="caminho do arquivo JSONL da trilha")
     return parser
 
 
@@ -79,4 +82,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.command == "pin":
         names = asyncio.run(pin_upstream(args.catalog, args.server, args.upstream))
         print(f"{len(names)} ferramenta(s) fixada(s) para {args.server}: {', '.join(names)}")
+    elif args.command == "audit-verify":
+        result = verify_trail(args.path)
+        if result.ok:
+            print(f"trilha íntegra: {result.entries} registro(s) verificado(s)")
+            return 0
+        print(f"adulteração detectada: {result.error}")
+        return 1
     return 0

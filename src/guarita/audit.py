@@ -103,3 +103,41 @@ class AuditingGate:
         decision = await self._inner.decide(call)
         self._trail.record(call, decision)
         return decision
+
+
+@dataclass(frozen=True)
+class VerificationResult:
+    ok: bool
+    entries: int
+    error: str = ""
+
+
+def verify_trail(path: str | Path) -> VerificationResult:
+    """Confere sequência, encadeamento e SHA-256 de cada linha da trilha."""
+    trail_path = Path(path)
+    if not trail_path.exists():
+        return VerificationResult(ok=False, entries=0, error="arquivo de auditoria não encontrado")
+    lines = [line for line in trail_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    expected_prev = GENESIS_HASH
+    for idx, line in enumerate(lines, start=1):
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as error:
+            return VerificationResult(
+                ok=False, entries=idx - 1, error=f"linha {idx}: JSON inválido ({error})"
+            )
+        if raw.get("seq") != idx:
+            return VerificationResult(
+                ok=False, entries=idx - 1, error=f"linha {idx}: sequência quebrada"
+            )
+        if raw.get("prev_hash") != expected_prev:
+            return VerificationResult(
+                ok=False, entries=idx - 1, error=f"linha {idx}: prev_hash divergente"
+            )
+        actual_hash = compute_entry_hash(raw)
+        if raw.get("entry_hash") != actual_hash:
+            return VerificationResult(
+                ok=False, entries=idx - 1, error=f"linha {idx}: hash adulterado"
+            )
+        expected_prev = actual_hash
+    return VerificationResult(ok=True, entries=len(lines))

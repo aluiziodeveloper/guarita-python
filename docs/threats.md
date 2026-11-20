@@ -14,4 +14,4 @@ Gerado por `uv run python -m guarita.threats > docs/threats.md`.
 | `resource-abuse` | Laço de chamadas que esgota cota ou custo | LLM06:2026, ASI08 | 07 | parcialmente mitigada | token bucket, orçamento de custo e disjuntor (07-02 e 07-03) |
 | `unexpected-execution` | Servidor de ferramentas executando no host | ASI05, MCP05 | 07 | parcialmente mitigada | contêiner sem rede, somente leitura e sem capabilities para stdio (07-04) |
 | `credential-misuse` | Token do usuário repassado ao servidor (confused deputy) | MCP07, ASI03, MCP01 | 08 | aberta | - |
-| `audit-tampering` | Registro apagado, editado ou ausente | MCP08 | 08 | aberta | - |
+| `audit-tampering` | Registro apagado, editado ou ausente | MCP08 | 08 | parcialmente mitigada | trilha JSONL encadeada por SHA-256 e verificador audit-verify (08-01 e 08-02) |
