@@ -81,6 +81,8 @@ THREATS: tuple[Threat, ...] = (
         "Laço de chamadas que esgota cota ou custo",
         ("LLM06:2026", "ASI08"),
         "07",
+        Status.PARTIAL,
+        "token bucket, orçamento de custo e disjuntor (07-02 e 07-03)",
     ),
     Threat(
         "unexpected-execution",
