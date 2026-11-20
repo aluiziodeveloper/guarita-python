@@ -18,6 +18,7 @@ class InvalidCallError(ValueError):
 class Verdict(StrEnum):
     ALLOW = "allow"
     DENY = "deny"
+    ASK = "ask"
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,10 @@ class Decision:
     @classmethod
     def deny(cls, reason: str) -> Decision:
         return cls(Verdict.DENY, reason)
+
+    @classmethod
+    def ask(cls, reason: str) -> Decision:
+        return cls(Verdict.ASK, reason)
 
     @property
     def allowed(self) -> bool:
