@@ -49,6 +49,8 @@ THREATS: tuple[Threat, ...] = (
         "Agente com mais permissão do que a tarefa pede",
         ("LLM03:2026", "ASI02", "MCP02"),
         "04",
+        Status.PARTIAL,
+        "política TOML default-deny por agente e argumento (04-01 e 04-02)",
     ),
     Threat("approval-fatigue", "Aprovação humana obtida por cansaço", ("ASI09",), "04"),
     Threat(

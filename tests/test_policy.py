@@ -71,3 +71,42 @@ async def test_deny_wins_over_ask_and_allow() -> None:
 def test_refuses_invalid_policy_definitions(bad_toml: str) -> None:
     with pytest.raises(PolicyError):
         PolicyGate.from_toml(bad_toml)
+
+
+async def test_matches_rules_by_agent_and_argument_globs() -> None:
+    gate = PolicyGate.from_toml(
+        """
+        [[rules]]
+        effect = "allow"
+        agents = ["support-bot"]
+        tools = ["read_file"]
+        [rules.arguments]
+        path = ["notes/*.txt", "notes.txt"]
+        """
+    )
+
+    ok = await gate.decide(Call("read_file", {"path": "notes/q4.txt"}, agent="support-bot"))
+    wrong_agent = await gate.decide(Call("read_file", {"path": "notes/q4.txt"}, agent="intern-bot"))
+    wrong_path = await gate.decide(
+        Call("read_file", {"path": "~/.ssh/id_rsa"}, agent="support-bot")
+    )
+
+    assert ok.allowed is True
+    assert wrong_agent.allowed is False
+    assert wrong_path.allowed is False
+
+
+async def test_blocks_path_traversal_against_glob_patterns() -> None:
+    gate = PolicyGate.from_toml(
+        """
+        [[rules]]
+        effect = "allow"
+        tools = ["read_file"]
+        [rules.arguments]
+        path = ["notes/*"]
+        """
+    )
+
+    traversal = await gate.decide(Call("read_file", {"path": "notes/../.ssh/id_rsa"}))
+
+    assert traversal.allowed is False

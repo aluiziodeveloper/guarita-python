@@ -1,9 +1,12 @@
 """Política como código em TOML com negação por padrão (default-deny)."""
 
+import fnmatch
 import tomllib
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from enum import StrEnum
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from types import MappingProxyType
 from typing import Any
 
 from guarita.domain import Call, Decision
@@ -19,14 +22,35 @@ class Effect(StrEnum):
     ASK = "ask"
 
 
+def _has_traversal(value: str) -> bool:
+    return ".." in PurePosixPath(value.replace("\\", "/")).parts
+
+
+def _argument_matches(value: Any, patterns: tuple[str, ...]) -> bool:
+    if not isinstance(value, str):
+        return False
+    if _has_traversal(value):
+        return False
+    return any(fnmatch.fnmatchcase(value, pat) for pat in patterns)
+
+
 @dataclass(frozen=True)
 class Rule:
     effect: Effect
     tools: tuple[str, ...]
     reason: str = ""
+    agents: tuple[str, ...] = ()
+    arguments: Mapping[str, tuple[str, ...]] = field(default_factory=lambda: MappingProxyType({}))
 
     def matches(self, call: Call) -> bool:
-        return call.tool in self.tools or "*" in self.tools
+        if self.agents and call.agent not in self.agents and "*" not in self.agents:
+            return False
+        if call.tool not in self.tools and "*" not in self.tools:
+            return False
+        for key, patterns in self.arguments.items():
+            if key not in call.arguments or not _argument_matches(call.arguments[key], patterns):
+                return False
+        return True
 
 
 def _parse_rule(raw: dict[str, Any]) -> Rule:
@@ -37,8 +61,24 @@ def _parse_rule(raw: dict[str, Any]) -> Rule:
     tools = raw.get("tools")
     if not isinstance(tools, list) or not tools or not all(isinstance(t, str) for t in tools):
         raise PolicyError(f"a regra precisa listar ao menos uma ferramenta: {raw!r}")
-    reason = str(raw.get("reason", ""))
-    return Rule(effect=effect, tools=tuple(tools), reason=reason)
+    agents = raw.get("agents", [])
+    if not isinstance(agents, list) or not all(isinstance(a, str) for a in agents):
+        raise PolicyError(f"'agents' precisa ser lista de strings: {raw!r}")
+    raw_args = raw.get("arguments", {})
+    if not isinstance(raw_args, dict):
+        raise PolicyError(f"'arguments' precisa ser uma tabela: {raw!r}")
+    parsed_args: dict[str, tuple[str, ...]] = {}
+    for k, v in raw_args.items():
+        if not isinstance(v, list) or not v or not all(isinstance(p, str) for p in v):
+            raise PolicyError(f"padrões inválidos para argumento {k!r}: {v!r}")
+        parsed_args[str(k)] = tuple(v)
+    return Rule(
+        effect=effect,
+        tools=tuple(tools),
+        reason=str(raw.get("reason", "")),
+        agents=tuple(agents),
+        arguments=MappingProxyType(parsed_args),
+    )
 
 
 class PolicyGate:

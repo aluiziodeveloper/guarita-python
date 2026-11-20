@@ -27,6 +27,7 @@ class Call:
 
     tool: str
     arguments: Mapping[str, Any] = field(default_factory=dict)
+    agent: str = "anonymous"
 
     def __post_init__(self) -> None:
         if not TOOL_NAME.fullmatch(self.tool):
